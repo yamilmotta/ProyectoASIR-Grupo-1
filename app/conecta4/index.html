@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conecta 4 + Chat</title>
+    <style>
+        /* --- ESTILOS GENERALES --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { margin-bottom: 10px; color: #2c3e50; }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        /* --- SECCIÓN JUEGO --- */
+        .game-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select { padding: 8px; font-size: 1rem; border-radius: 4px; border: 1px solid #ccc; }
+        .btn-restart { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-restart:hover { background: #c0392b; }
+
+        #info {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            min-width: 200px;
+            text-align: center;
+        }
+
+        /* --- TABLERO --- */
+        .tablero-container {
+            background-color: #0055aa; /* Azul clásico */
+            padding: 10px 10px 20px 10px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 4px solid #004488;
+        }
+
+        .flechas {
+            display: grid;
+            grid-template-columns: repeat(7, 50px);
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .flecha-btn {
+            background: #ecf0f1;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.2s;
+            color: #333;
+        }
+        .flecha-btn:hover { background: #bdc3c7; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, 50px);
+            grid-template-rows: repeat(6, 50px);
+            gap: 5px;
+        }
+
+        .celda {
+            width: 50px;
+            height: 50px;
+            background-color: #f4f4f9; /* Hueco vacío */
+            border-radius: 50%;
+            border: 2px solid #003366;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* FICHAS */
+        .celda.Rojo { background-color: #e74c3c; border-color: #c0392b; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.3); }
+        .celda.Amarillo { background-color: #f1c40f; border-color: #f39c12; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.3); }
+
+        /* --- SECCIÓN CHAT --- */
+        .chat-section {
+            width: 320px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 500px; /* Altura fija para el chat */
+        }
+
+        .chat-header { background: #34495e; color: white; padding: 10px; text-align: center; font-weight: bold; }
+
+        .chat-box {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .msg {
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            max-width: 80%;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .msg.Rojo {
+            background-color: #fadbd8;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border-left: 5px solid #e74c3c;
+        }
+
+        .msg.Amarillo {
+            background-color: #fcf3cf;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            border-right: 5px solid #f1c40f;
+            text-align: right;
+        }
+
+        .msg-time { display: block; font-size: 0.65rem; color: #7f8c8d; margin-top: 4px; }
+
+        .chat-input-area {
+            display: flex;
+            border-top: 1px solid #ddd;
+            padding: 5px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .chat-input-area button {
+            background: #2980b9;
+            color: white;
+            border: none;
+            padding: 0 15px;
+            margin-left: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .chat-input-area button:hover { background: #1a5276; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Conecta 4 Online</h1>
+
+    <div class="container">
+        <div class="game-section">
+            
+            <div class="controls">
+                <label>Soy:</label>
+                <select id="miRol">
+                    <option value="Rojo">🔴 Rojo</option>
+                    <option value="Amarillo">🟡 Amarillo</option>
+                </select>
+                <button class="btn-restart" onclick="reiniciar()">🔄 Reiniciar</button>
+            </div>
+
+            <div id="info">Cargando estado...</div>
+
+            <div class="tablero-container">
+                <div class="flechas">
+                    <button class="flecha-btn" onclick="soltar(0)">⬇</button>
+                    <button class="flecha-btn" onclick="soltar(1)">⬇</button>
+                    <button class="flecha-btn" onclick="soltar(2)">⬇</button>
+                    <button class="flecha-btn" onclick="soltar(3)">⬇</button>
+                    <button class="flecha-btn" onclick="soltar(4)">⬇</button>
+                    <button class="flecha-btn" onclick="soltar(5)">⬇</button>
+                    <button class="flecha-btn" onclick="soltar(6)">⬇</button>
+                </div>
+                
+                <div class="grid" id="tablero-visual"></div>
+            </div>
+        </div>
+
+        <div class="chat-section">
+            <div class="chat-header">Chat de Insultos</div>
+            <div class="chat-box" id="chat-box">
+                </div>
+            <div class="chat-input-area">
+                <input type="text" id="mensajeInput" placeholder="Algún insulto?" onkeypress="checkEnter(event)">
+                <button onclick="enviarMensaje()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- VARIABLES GLOBALES ---
+        const tableroDiv = document.getElementById('tablero-visual');
+        const infoDiv = document.getElementById('info');
+        const chatBox = document.getElementById('chat-box');
+        const inputMsg = document.getElementById('mensajeInput');
+
+        // --- INICIALIZACIÓN ---
+        // Crear las 42 celdas vacías al cargar
+        for(let i=0; i<42; i++) {
+            let celda = document.createElement('div');
+            celda.className = 'celda';
+            celda.id = 'c-' + i;
+            tableroDiv.appendChild(celda);
+        }
+
+        // --- POLLING (BUCLES INFINITOS) ---
+        
+        // 1. Juego (Cada 1s)
+        setInterval(() => {
+            fetch('conecta4.php')
+                .then(r => r.json())
+                .then(dibujarTablero)
+                .catch(err => console.log("Esperando servidor..."));
+        }, 1000);
+
+        // 2. Chat (Cada 1.5s)
+        setInterval(() => {
+            fetch('chat.php')
+                .then(r => r.json())
+                .then(dibujarChat)
+                .catch(err => console.log("Esperando chat..."));
+        }, 1500);
+
+
+        // --- FUNCIONES DEL JUEGO ---
+
+        function dibujarTablero(estado) {
+            let contador = 0;
+            // Recorrer la matriz que viene de PHP
+            for(let f=0; f<6; f++) {
+                for(let c=0; c<7; c++) {
+                    let color = estado.tablero[f][c]; 
+                    let div = document.getElementById('c-' + contador);
+                    // Actualizar clase solo si cambia
+                    div.className = 'celda ' + color; 
+                    contador++;
+                }
+            }
+
+            // Actualizar textos de estado
+            if(estado.ganador) {
+                infoDiv.innerHTML = "🏆 ¡GANADOR: <span style='color:" + (estado.ganador=='Rojo'?'red':'orange') + "'>" + estado.ganador + "</span>!";
+            } else {
+                infoDiv.innerHTML = "Turno de: <strong>" + estado.turno + "</strong>";
+            }
+        }
+
+        function soltar(columna) {
+            const miRol = document.getElementById('miRol').value;
+            fetch('conecta4.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: 'jugar', columna: columna, jugador: miRol })
+            })
+            .then(r => r.json())
+            .then(dibujarTablero);
+        }
+
+        function reiniciar() {
+            if(confirm("¿Seguro que quieres reiniciar la partida?")) {
+                fetch('conecta4.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ accion: 'reiniciar' })
+                });
+            }
+        }
+
+        // --- FUNCIONES DEL CHAT ---
+
+        function dibujarChat(mensajes) {
+            // Detectar si el usuario está mirando mensajes viejos o está abajo del todo
+            const isScrolledToBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
+            
+            // Guardamos el HTML actual para comparar (optimización básica)
+            // Para simplificar, repintamos, pero en app real usaríamos IDs
+            chatBox.innerHTML = ''; 
+
+            mensajes.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = `msg ${msg.jugador}`;
+                div.innerHTML = `<strong>${msg.jugador}</strong>: ${msg.texto} <span class="msg-time">${msg.hora}</span>`;
+                chatBox.appendChild(div);
+            });
+
+            // Solo bajar scroll si ya estaba abajo (para no molestar si lees historial)
+            if(isScrolledToBottom) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        function enviarMensaje() {
+            const texto = inputMsg.value.trim();
+            if (!texto) return;
+
+            const miRol = document.getElementById('miRol').value;
+
+            fetch('chat.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: 'enviar', jugador: miRol, texto: texto })
+            })
+            .then(r => r.json())
+            .then(dibujarChat);
+
+            inputMsg.value = ''; // Limpiar input
+            // Auto scroll abajo al enviar
+            setTimeout(() => chatBox.scrollTop = chatBox.scrollHeight, 100);
+        }
+
+        function checkEnter(e) {
+            if (e.key === "Enter") enviarMensaje();
+        }
+
+    </script>
+</body>
+</html>
