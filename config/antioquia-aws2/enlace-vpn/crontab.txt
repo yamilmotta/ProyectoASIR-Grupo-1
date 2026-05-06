@@ -1,0 +1,27 @@
+# ============================================================
+#  Antioquía (Sede Nube - AWS2) — Crontab
+#  Servidor-BBDD-MySQL (Cámara Privada: 10.1.0.30)
+#  Tareas programadas automáticas
+# ============================================================
+#
+#  Para aplicar en el servidor ejecutar:
+#  crontab -e
+#  y pegar las líneas de abajo
+#
+# ┌─── minuto (0-59)
+# │ ┌─── hora (0-23)
+# │ │ ┌─── día del mes (1-31)
+# │ │ │ ┌─── mes (1-12)
+# │ │ │ │ ┌─── día de la semana (0-7, 0 y 7=domingo)
+# │ │ │ │ │
+# * * * * * comando
+
+# Backup diario a las 02:00 AM
+# Genera volcado completo de la BD damas en /home/ubuntu/backups/
+# y elimina backups con más de 7 días
+0 2 * * * /home/ubuntu/backup_damas.sh >> /var/log/backup_damas.log 2>&1
+
+# Limpieza de partidas expiradas — cada hora
+# Llama al procedimiento limpiar_expiradas() que elimina
+# partidas con expira_en < NOW() para mantener la BD limpia
+0 * * * * sudo mysql damas -e 'CALL limpiar_expiradas();' >> /var/log/damas_cron.log 2>&1
