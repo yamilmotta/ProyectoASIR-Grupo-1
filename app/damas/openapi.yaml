@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: API Damas - TFG ASIR Grupo 1
+  description: |
+    API REST del juego de damas anglosajonas.
+    Endpoint único `/api.php` parametrizado por `accion` (nueva, estado, mover).
+    La autenticación se realiza mediante un `token` por jugador, emitido al crear la partida.
+  version: 1.0.0
+  contact:
+    name: TFG Grupo 1
+
+servers:
+  - url: http://damas-web
+    description: Entorno efímero de DAST (red Docker interna en Jenkins)
+  - url: http://10.1.0.85
+    description: Entorno de producción AWS2 (acceso por VPN)
+
+paths:
+  /api.php:
+    get:
+      summary: Consultar estado de partida
+      description: Devuelve el tablero, turno y estado de la partida identificada por código y token.
+      operationId: estadoPartida
+      parameters:
+        - name: accion
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [estado]
+        - name: codigo
+          in: query
+          required: true
+          description: Código de partida de 8 caracteres
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 8
+            pattern: '^[a-f0-9]{8}$'
+            example: "abc12345"
+        - name: token
+          in: query
+          required: true
+          description: Token de autenticación del jugador (64 caracteres hex)
+          schema:
+            type: string
+            minLength: 64
+            maxLength: 64
+            pattern: '^[a-f0-9]{64}$'
+            example: "0000000000000000000000000000000000000000000000000000000000000000"
+      responses:
+        '200':
+          description: Estado actual de la partida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoPartida'
+        '400':
+          description: Parámetros inválidos
+        '403':
+          description: Token incorrecto para esta partida
+        '404':
+          description: Partida no encontrada o expirada
+
+    post:
+      summary: Crear partida o realizar movimiento
+      description: |
+        - `accion=nueva`: crea una partida nueva, devuelve código y tokens de ambos jugadores.
+        - `accion=mover`: realiza un movimiento autenticado.
+      operationId: accionPartida
+      parameters:
+        - name: accion
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [nueva, mover]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/NuevaPartidaRequest'
+                - $ref: '#/components/schemas/MovimientoRequest'
+              discriminator:
+                propertyName: tipo
+      responses:
+        '200':
+          description: Operación completada
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/NuevaPartidaResponse'
+                  - $ref: '#/components/schemas/MovimientoResponse'
+        '400':
+          description: Petición malformada o movimiento ilegal
+        '403':
+          description: No es el turno del jugador o token inválido
+        '404':
+          description: Partida no encontrada
+        '409':
+          description: La partida ya ha finalizado
+
+components:
+  schemas:
+    NuevaPartidaRequest:
+      type: object
+      required: [apodo_rojo, apodo_negro]
+      properties:
+        apodo_rojo:
+          type: string
+          minLength: 1
+          maxLength: 20
+          example: "Rojo"
+        apodo_negro:
+          type: string
+          minLength: 1
+          maxLength: 20
+          example: "Negro"
+
+    NuevaPartidaResponse:
+      type: object
+      required: [codigo, token_rojo, token_negro]
+      properties:
+        codigo:
+          type: string
+          description: Código de partida compartido con los dos jugadores
+          example: "abc12345"
+        token_rojo:
+          type: string
+          description: Token privado del jugador rojo
+          example: "0000000000000000000000000000000000000000000000000000000000000000"
+        token_negro:
+          type: string
+          description: Token privado del jugador negro
+          example: "1111111111111111111111111111111111111111111111111111111111111111"
+
+    MovimientoRequest:
+      type: object
+      required: [codigo, token, orFila, orCol, dsFila, dsCol]
+      properties:
+        codigo:
+          type: string
+          pattern: '^[a-f0-9]{8}$'
+          example: "abc12345"
+        token:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+          example: "0000000000000000000000000000000000000000000000000000000000000000"
+        orFila:
+          type: integer
+          description: Fila de origen (0-7)
+          minimum: 0
+          maximum: 7
+          example: 5
+        orCol:
+          type: integer
+          description: Columna de origen (0-7)
+          minimum: 0
+          maximum: 7
+          example: 0
+        dsFila:
+          type: integer
+          description: Fila de destino (0-7)
+          minimum: 0
+          maximum: 7
+          example: 4
+        dsCol:
+          type: integer
+          description: Columna de destino (0-7)
+          minimum: 0
+          maximum: 7
+          example: 1
+
+    MovimientoResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        capturas:
+          type: array
+          description: Lista de piezas capturadas en el movimiento
+          items:
+            type: object
+            properties:
+              fila:
+                type: integer
+                minimum: 0
+                maximum: 7
+              col:
+                type: integer
+                minimum: 0
+                maximum: 7
+        coronada:
+          type: boolean
+          description: Indica si la pieza se ha convertido en dama
+          example: false
+
+    EstadoPartida:
+      type: object
+      required: [codigo, tablero, turno]
+      properties:
+        codigo:
+          type: string
+          example: "abc12345"
+        tablero:
+          type: array
+          description: Matriz 8x8 con el estado del tablero (0=vacío, 1=rojo, 2=negro, 3=dama_roja, 4=dama_negra)
+          items:
+            type: array
+            items:
+              type: integer
+              minimum: 0
+              maximum: 4
+        turno:
+          type: string
+          enum: [R, N]
+          description: Color del jugador al que le toca mover
+        ganador:
+          type: string
+          nullable: true
+          enum: [R, N, null]
+          description: Color ganador, o null si la partida sigue activa
+        ultimo_cambio:
+          type: string
+          format: date-time
+          example: "2026-05-11T14:30:00Z"
