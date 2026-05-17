@@ -91,9 +91,7 @@ stage('DAST: ZAP API Scan') {
                     TOKEN_R=$(echo $PARTIDA | grep -oP '"token_rojo":"\\K[^"]+')
                     
                     # Inyectar variables en el OpenAPI
-                    sed -e "s/abc12345/$CODIGO/g" \
-                        -e "s/0000000000000000000000000000000000000000000000000000000000000000/$TOKEN_R/g" \
-                        app/damas/openapi.yaml > zap-reports/openapi-runtime.yaml
+                    sed -e "s/abc12345/$CODIGO/g" -e "s/0000000000000000000000000000000000000000000000000000000000000000/$TOKEN_R/g" app/damas/openapi.yaml > zap-reports/openapi-runtime.yaml
                     
                     # Ejecutar escaneo activo
                     docker run --rm --network damas-test \
