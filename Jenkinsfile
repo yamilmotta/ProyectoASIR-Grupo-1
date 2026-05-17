@@ -34,28 +34,26 @@ pipeline {
             agent any
             steps {
                 sh '''
-                    # Limpiamos restos de ejecuciones anteriores por si acaso
                     docker network create damas-test 2>/dev/null || true
                     docker rm -f damas-db damas-web 2>/dev/null || true
                     
-                    # Ejecutamos SIN --rm para poder ver el error si muere
                     docker run -d --name damas-db --network damas-test \
                         -e MYSQL_ROOT_PASSWORD=test \
                         -e MYSQL_DATABASE=damas \
                         -v $PWD/app/damas/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro \
                         mysql:8.0
                     
-                    echo "Esperando a que la base de datos arranque..."
+                    echo "Esperando a que la base de datos arranque (Fase TCP)..."
                     for i in $(seq 1 30); do
-                        # 1. Comprobamos si el contenedor ha muerto prematuramente
+                        # Comprobar si el contenedor crashea ejecutando el schema.sql
                         if ! docker ps -q -f name=damas-db | grep -q .; then
-                            echo "EL CONTENEDOR HA CRASHEADO. Estos son los logs de MySQL:"
+                            echo "EL CONTENEDOR MYSQL HA MUERTO. Mostrando logs:"
                             docker logs damas-db
                             exit 1
                         fi
                         
-                        # 2. Si sigue vivo, intentamos hacer ping
-                        if docker exec damas-db mysqladmin ping -uroot -ptest --silent 2>/dev/null; then
+                        # Forzar ping por TCP (ignora el servidor temporal)
+                        if docker exec damas-db mysqladmin ping -uroot -ptest -h 127.0.0.1 --silent 2>/dev/null; then
                             echo "Base de datos lista y operativa."
                             break
                         fi
