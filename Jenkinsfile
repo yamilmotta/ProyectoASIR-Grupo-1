@@ -75,7 +75,7 @@ pipeline {
             }
         }
 
-        stage('DAST: ZAP API Scan') {
+stage('DAST: ZAP API Scan') {
             agent any
             steps {
                 sh '''
@@ -119,7 +119,6 @@ pipeline {
                 }
             }
         }
-
         stage('Desmontar entorno efímero') {
             agent any
             steps {
