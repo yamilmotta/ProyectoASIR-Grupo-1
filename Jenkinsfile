@@ -157,9 +157,11 @@ stage('Deploy a Producción (AWS2)') {
                             
                         ssh -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 "cd /home/ubuntu/mi_proyecto_web && docker compose up -d --build"
                     '''
-                }
-            }
-        }
+                } // Cierra sshagent
+            } // Cierra steps
+        } // Cierra stage
+    } // Cierra el bloque general de 'stages'
+
     post {
         always {
             node('built-in') {
@@ -176,5 +178,4 @@ stage('Deploy a Producción (AWS2)') {
             echo 'Pipeline OK — Despliegue completado.'
         }
     }
-}
-}
+} // Cierra el bloque 'pipeline' principal
