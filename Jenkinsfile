@@ -39,7 +39,7 @@ pipeline {
                     docker run -d --rm --name damas-db --network damas-test \
                         -e MYSQL_ROOT_PASSWORD=test \
                         -e MYSQL_DATABASE=damas \
-                        -v $PWD/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro \
+                        -v $PWD/app/damas/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro \
                         mysql:8.0
                     
                     for i in $(seq 1 30); do
