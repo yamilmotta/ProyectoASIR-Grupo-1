@@ -155,7 +155,7 @@ stage('Deploy a Producción (AWS2)') {
                             app/damas/ \
                             ubuntu@10.100.0.3:/home/ubuntu/mi_proyecto_web/html/
                             
-                      ssh -n -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 "cd /home/ubuntu/mi_proyecto_web && docker compose up -d --build"
+                   ssh -n -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 "cd /home/ubuntu/mi_proyecto_web && docker compose up -d"
                     '''
                 } // Cierra sshagent
             } // Cierra steps
