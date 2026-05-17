@@ -6,6 +6,11 @@ class DB {
 
     private function __construct() {}
 
+    /* ── Conexión Singleton ─────────────────────────────────
+       Host apunta al servidor MySQL en la subred privada.
+       El usuario 'damas_user' tiene permisos mínimos.
+       Las credenciales críticas se leen mediante variables de entorno.
+    ── */
     public static function get(): PDO {
         if (self::$instance === null) {
             $host   = getenv('DB_HOST') ?: '10.1.0.30';
@@ -14,7 +19,7 @@ class DB {
             $pass   = getenv('DB_PASS'); // Obligatorio, sin fallback hardcodeado
 
             $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
-
+              
             self::$instance = new PDO($dsn, $user, $pass, [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -24,46 +29,112 @@ class DB {
         return self::$instance;
     }
 
-    /* Carga una partida por id */
-    public static function cargarPartida(int $id): ?array {
+    /* ── Crear partida ──────────────────────────────────────
+       Llama al procedimiento almacenado que genera el código
+       público (8 chars) y los dos tokens SHA-256.
+       Devuelve: id, codigo, token_rojo, token_negro
+    ── */
+    public static function nuevaPartida(string $apodoRojo, string $apodoNegro): array {
+        $pdo  = self::get();
+        $stmt = $pdo->prepare(
+            'CALL nueva_partida(?, ?, @pid, @codigo, @token_rojo, @token_negro)'
+        );
+        $stmt->execute([$apodoRojo, $apodoNegro]);
+        $stmt->closeCursor();
+
+        return $pdo->query(
+            'SELECT @pid        AS id,
+                    @codigo     AS codigo,
+                    @token_rojo AS token_rojo,
+                    @token_negro AS token_negro'
+        )->fetch();
+    }
+
+    /* ── Cargar partida por código público ─────────────────
+       El código es el identificador que ven los jugadores.
+       El id interno nunca se expone al frontend.
+    ── */
+    public static function cargarPartida(string $codigo): ?array {
         $stmt = self::get()->prepare(
-            'SELECT id, tablero, turno, ganador,
+            'SELECT id, codigo,         
+                    token_rojo, token_negro,
+                    apodo_rojo, apodo_negro,
+                    tablero, turno, ganador,
                     UNIX_TIMESTAMP(ultimo_cambio) AS ts
              FROM   partidas
-             WHERE  id = ? AND activa = 1
+             WHERE  codigo = ?
+               AND  activa  = 1
              LIMIT  1'
         );
-        $stmt->execute([$id]);
+        $stmt->execute([$codigo]);
         $row = $stmt->fetch();
         if (!$row) return null;
+
         $row['tablero'] = json_decode($row['tablero'], true);
         return $row;
     }
 
-    /* Guarda el estado tras un movimiento */
+    /* ── Validar token ──────────────────────────────────────
+       Compara usando hash_equals (protección timing-attack).
+       Solo acepta el token del jugador cuyo turno es activo.
+    ── */
+    public static function validarToken(array $partida, string $token): bool {
+        return match ($partida['turno']) {
+            'R' => hash_equals($partida['token_rojo'],  $token),
+            'N' => hash_equals($partida['token_negro'], $token),
+            default => false,
+        };
+    }
+
+    /* ── Guardar estado + registrar movimiento ──────────────
+       Actualiza la partida y deja trazabilidad completa
+       en la tabla movimientos para auditoría.
+    ── */
     public static function guardarEstado(
-        int    $id,
-        array  $tablero,
-        string $turno,
-        ?string $ganador = null
+        int     $id,
+        array   $tablero,
+        string  $turno,
+        ?string $ganador,
+        string  $jugador,
+        int     $orFila,
+        int     $orCol,
+        int     $dsFila,
+        int     $dsCol,
+        bool    $fueCaptura,
+        bool    $fueCoronacion
     ): void {
         $pdo  = self::get();
         $json = json_encode($tablero, JSON_UNESCAPED_UNICODE);
-        $stmt = $pdo->prepare(
+
+        // 1 — Actualizar estado de la partida
+        $pdo->prepare(
             'UPDATE partidas
              SET    tablero = ?,
                     turno   = ?,
                     ganador = ?,
                     activa  = IF(? IS NULL, 1, 0)
              WHERE  id = ?'
-        );
-        $stmt->execute([$json, $turno, $ganador, $ganador, $id]);
-    }
+        )->execute([$json, $turno, $ganador, $ganador, $id]);
 
-    /* Crea una nueva partida usando el procedimiento almacenado */
-    public static function nuevaPartida(): int {
-        $pdo = self::get();
-        $pdo->exec('CALL nueva_partida(@pid)');
-        return (int) $pdo->query('SELECT @pid')->fetchColumn();
+        // 2 — Calcular número de turno secuencial
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM movimientos WHERE partida_id = ?'
+        );
+        $stmt->execute([$id]);
+        $numTurno = (int)$stmt->fetchColumn() + 1;
+
+        // 3 — Registrar en historial de movimientos
+        $pdo->prepare(
+            'INSERT INTO movimientos
+             (partida_id, numero_turno, jugador,
+              origen_fila, origen_col, destino_fila, destino_col,
+              fue_captura, fue_coronacion)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        )->execute([
+            $id, $numTurno, $jugador,
+            $orFila, $orCol, $dsFila, $dsCol,
+            $fueCaptura    ? 1 : 0,
+            $fueCoronacion ? 1 : 0,
+        ]);
     }
 }
