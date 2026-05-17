@@ -93,26 +93,26 @@ stage('DAST: ZAP API Scan') {
                     # Inyectar variables en el OpenAPI
                     sed -e "s/abc12345/$CODIGO/g" -e "s/0000000000000000000000000000000000000000000000000000000000000000/$TOKEN_R/g" app/damas/openapi.yaml > openapi-runtime.yaml
                     
-                    # 1. Crear el contenedor de ZAP (sin encenderlo) y sin montar volúmenes (-v)
+                    # 1. Crear el contenedor de ZAP apuntando a la ruta /zap/
                     docker rm -f zap-scanner 2>/dev/null || true
                     docker create --name zap-scanner --network damas-test \
                         ghcr.io/zaproxy/zaproxy:stable \
                         zap-api-scan.py \
-                            -t /zap/wrk/openapi-runtime.yaml \
+                            -t /zap/openapi-runtime.yaml \
                             -f openapi \
                             -r zap-api-report.html \
                             -J zap-api-report.json \
                             -I
                             
-                    # 2. Copiar el archivo configurado desde Jenkins hacia dentro de ZAP
-                    docker cp openapi-runtime.yaml zap-scanner:/zap/wrk/
+                    # 2. Copiar el archivo directamente a la carpeta /zap/
+                    docker cp openapi-runtime.yaml zap-scanner:/zap/openapi-runtime.yaml
                     
                     # 3. Arrancar ZAP y esperar a que termine su ataque
                     docker start -a zap-scanner
                     
-                    # 4. Extraer los reportes generados de vuelta a Jenkins
-                    docker cp zap-scanner:/zap/wrk/zap-api-report.html zap-reports/ || true
-                    docker cp zap-scanner:/zap/wrk/zap-api-report.json zap-reports/ || true
+                    # 4. Extraer los reportes desde /zap/
+                    docker cp zap-scanner:/zap/zap-api-report.html zap-reports/ || true
+                    docker cp zap-scanner:/zap/zap-api-report.json zap-reports/ || true
                     
                     # 5. Limpieza
                     docker rm -f zap-scanner
