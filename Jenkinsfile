@@ -156,8 +156,7 @@ stage('DAST: ZAP API Scan') {
                             app/damas/ \
                             ubuntu@10.100.0.3:/home/ubuntu/mi_proyecto_web/html/
                             
-                        ssh -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 \
-                            'cd /home/ubuntu/mi_proyecto_web && docker compose up -d --build'
+                        ssh -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 "cd /home/ubuntu/mi_proyecto_web && docker compose up -d --build"
                     '''
                 }
             }
