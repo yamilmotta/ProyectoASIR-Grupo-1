@@ -153,7 +153,7 @@ stage('DAST: ZAP API Scan') {
                     sh '''
                         rsync -avz --delete \
                             -e "ssh -o StrictHostKeyChecking=accept-new" \
-                            app/damas/html/ \
+                            app/damas/ \
                             ubuntu@10.100.0.3:/home/ubuntu/mi_proyecto_web/html/
                             
                         ssh -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 \
