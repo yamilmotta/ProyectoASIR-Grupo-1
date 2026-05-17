@@ -147,7 +147,6 @@ stage('DAST: ZAP API Scan') {
         }
 
         stage('Deploy a Producción (AWS2)') {
-            when { branch 'main' }
             agent any
             steps {
                 sshagent(['aws2-deploy-ssh-key']) {
