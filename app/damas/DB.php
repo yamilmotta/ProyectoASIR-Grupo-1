@@ -8,9 +8,13 @@ class DB {
 
     public static function get(): PDO {
         if (self::$instance === null) {
-            $dsn  = 'mysql:host=127.0.0.1;dbname=damas;charset=utf8mb4';
-            $user = 'root';     // Cambiar en producción
-            $pass = '';         // Cambiar en producción
+            $host   = getenv('DB_HOST') ?: '10.1.0.30';
+            $dbname = getenv('DB_NAME') ?: 'damas';
+            $user   = getenv('DB_USER') ?: 'damas_user';
+            $pass   = getenv('DB_PASS'); // Obligatorio, sin fallback hardcodeado
+
+            $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
+
             self::$instance = new PDO($dsn, $user, $pass, [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
