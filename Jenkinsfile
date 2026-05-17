@@ -93,14 +93,19 @@ stage('DAST: ZAP API Scan') {
                     # Inyectar variables en el OpenAPI
                     sed -e "s/abc12345/$CODIGO/g" -e "s/0000000000000000000000000000000000000000000000000000000000000000/$TOKEN_R/g" app/damas/openapi.yaml > openapi-runtime.yaml
                     
-                    # 1. Crear un volumen Docker puro (gestionado por el motor, sin problemas de rutas)
+                    # 1. Crear el volumen limpio
+                    docker volume rm zap-data 2>/dev/null || true
                     docker volume create zap-data
                     
                     # 2. Usar un contenedor auxiliar (helper) para inyectar el archivo en el volumen
+                    docker rm -f zap-helper 2>/dev/null || true
                     docker create --name zap-helper -v zap-data:/zap/wrk alpine tail
                     docker cp openapi-runtime.yaml zap-helper:/zap/wrk/
                     
-                    # 3. Lanzar ZAP montando el volumen. (Ahora sí pasará su comprobación estricta)
+                    # 3. ASIGNAR PERMISOS: Dar acceso de escritura al usuario restringido de ZAP
+                    docker run --rm -v zap-data:/zap/wrk alpine chmod 777 /zap/wrk
+                    
+                    # 4. Lanzar ZAP montando el volumen
                     docker run --rm --network damas-test -v zap-data:/zap/wrk \
                         ghcr.io/zaproxy/zaproxy:stable \
                         zap-api-scan.py \
@@ -110,11 +115,11 @@ stage('DAST: ZAP API Scan') {
                             -J zap-api-report.json \
                             -I
                             
-                    # 4. Extraer los reportes generados desde el volumen a nuestro Jenkins
+                    # 5. Extraer los reportes generados desde el volumen a nuestro Jenkins
                     docker cp zap-helper:/zap/wrk/zap-api-report.html zap-reports/ || true
                     docker cp zap-helper:/zap/wrk/zap-api-report.json zap-reports/ || true
                     
-                    # 5. Limpiar el entorno
+                    # 6. Limpiar el entorno
                     docker rm -f zap-helper
                     docker volume rm zap-data
                 '''
