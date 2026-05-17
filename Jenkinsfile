@@ -145,7 +145,6 @@ stage('DAST: ZAP API Scan') {
                 '''
             }
         }
-
         stage('Deploy a Producción (AWS2)') {
             agent any
             steps {
@@ -161,7 +160,6 @@ stage('DAST: ZAP API Scan') {
                 }
             }
         }
-    }
 
     post {
         always {
