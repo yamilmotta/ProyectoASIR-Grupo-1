@@ -155,7 +155,7 @@ stage('Deploy a Producción (AWS2)') {
     app/damas/ \
     ubuntu@10.100.0.3:/home/ubuntu/mi_proyecto_web/html/
                             
-                   scp -r -l 8000 -o StrictHostKeyChecking=accept-new app/damas/* ubuntu@10.100.0.3:/home/ubuntu/mi_proyecto_web/html/
+                  scp -l 8000 -o StrictHostKeyChecking=accept-new app/damas/*.php app/damas/*.html ubuntu@10.100.0.3:/home/ubuntu/mi_proyecto_web/html/
                     '''
                 } // Cierra sshagent
             } // Cierra steps
