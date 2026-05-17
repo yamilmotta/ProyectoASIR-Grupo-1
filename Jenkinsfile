@@ -30,29 +30,32 @@ pipeline {
             }
         }
 
-       stage('Levantar entorno efímero para DAST') {
+      stage('Levantar entorno efímero para DAST') {
             agent any
             steps {
                 sh '''
                     docker network create damas-test 2>/dev/null || true
                     docker rm -f damas-db damas-web 2>/dev/null || true
                     
+                    # 1. Empaquetamos la base de datos con el esquema dentro
+                    echo "FROM mysql:8.0" > Dockerfile.db
+                    echo "COPY app/damas/schema.sql /docker-entrypoint-initdb.d/01-schema.sql" >> Dockerfile.db
+                    docker build -t damas-db:test -f Dockerfile.db .
+                    
+                    # 2. Levantamos la BD ya empaquetada (sin el parámetro -v)
                     docker run -d --name damas-db --network damas-test \
                         -e MYSQL_ROOT_PASSWORD=test \
                         -e MYSQL_DATABASE=damas \
-                        -v $PWD/app/damas/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro \
-                        mysql:8.0
+                        damas-db:test
                     
                     echo "Esperando a que la base de datos arranque (Fase TCP)..."
                     for i in $(seq 1 30); do
-                        # Comprobar si el contenedor crashea ejecutando el schema.sql
                         if ! docker ps -q -f name=damas-db | grep -q .; then
                             echo "EL CONTENEDOR MYSQL HA MUERTO. Mostrando logs:"
                             docker logs damas-db
                             exit 1
                         fi
                         
-                        # Forzar ping por TCP (ignora el servidor temporal)
                         if docker exec damas-db mysqladmin ping -uroot -ptest -h 127.0.0.1 --silent 2>/dev/null; then
                             echo "Base de datos lista y operativa."
                             break
