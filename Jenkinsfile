@@ -93,29 +93,30 @@ stage('DAST: ZAP API Scan') {
                     # Inyectar variables en el OpenAPI
                     sed -e "s/abc12345/$CODIGO/g" -e "s/0000000000000000000000000000000000000000000000000000000000000000/$TOKEN_R/g" app/damas/openapi.yaml > openapi-runtime.yaml
                     
-                    # 1. Crear el contenedor de ZAP apuntando a la ruta /zap/
-                    docker rm -f zap-scanner 2>/dev/null || true
-                    docker create --name zap-scanner --network damas-test \
+                    # 1. Crear un volumen Docker puro (gestionado por el motor, sin problemas de rutas)
+                    docker volume create zap-data
+                    
+                    # 2. Usar un contenedor auxiliar (helper) para inyectar el archivo en el volumen
+                    docker create --name zap-helper -v zap-data:/zap/wrk alpine tail
+                    docker cp openapi-runtime.yaml zap-helper:/zap/wrk/
+                    
+                    # 3. Lanzar ZAP montando el volumen. (Ahora sí pasará su comprobación estricta)
+                    docker run --rm --network damas-test -v zap-data:/zap/wrk \
                         ghcr.io/zaproxy/zaproxy:stable \
                         zap-api-scan.py \
-                            -t /zap/openapi-runtime.yaml \
+                            -t /zap/wrk/openapi-runtime.yaml \
                             -f openapi \
                             -r zap-api-report.html \
                             -J zap-api-report.json \
                             -I
                             
-                    # 2. Copiar el archivo directamente a la carpeta /zap/
-                    docker cp openapi-runtime.yaml zap-scanner:/zap/openapi-runtime.yaml
+                    # 4. Extraer los reportes generados desde el volumen a nuestro Jenkins
+                    docker cp zap-helper:/zap/wrk/zap-api-report.html zap-reports/ || true
+                    docker cp zap-helper:/zap/wrk/zap-api-report.json zap-reports/ || true
                     
-                    # 3. Arrancar ZAP y esperar a que termine su ataque
-                    docker start -a zap-scanner
-                    
-                    # 4. Extraer los reportes desde /zap/
-                    docker cp zap-scanner:/zap/zap-api-report.html zap-reports/ || true
-                    docker cp zap-scanner:/zap/zap-api-report.json zap-reports/ || true
-                    
-                    # 5. Limpieza
-                    docker rm -f zap-scanner
+                    # 5. Limpiar el entorno
+                    docker rm -f zap-helper
+                    docker volume rm zap-data
                 '''
             }
             post {
