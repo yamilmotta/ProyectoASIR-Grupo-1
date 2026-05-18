@@ -151,7 +151,7 @@ stage('Deploy a Producción (AWS2)') {
                 sshagent(['aws2-deploy-ssh-key']) {
                     sh '''
                         # 1. Empaquetar al vuelo (excluyendo info sensible) y desempaquetar directamente en AWS2
-                        tar -czf - --exclude='schema.sql' --exclude='openapi.yaml' --exclude='Dockerfile*' -C app/damas . | ssh -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 "tar -xzf - -C /home/ubuntu/mi_proyecto_web/html/"
+                        tar -czf - --exclude='schema.sql' --exclude='openapi.yaml' --exclude='Dockerfile*' --exclude='nada.txt' -C app/damas . | ssh -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 "tar -xzf - -C /home/ubuntu/mi_proyecto_web/html/"
                         
                         # 2. Levantar los contenedores de forma limpia
                         ssh -n -o StrictHostKeyChecking=accept-new ubuntu@10.100.0.3 "cd /home/ubuntu/mi_proyecto_web && docker compose up -d"
