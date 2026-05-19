@@ -1,1 +1,2 @@
 Jenkinsfile linguist-language=Groovy
+Jenkinsfile linguist-detectable=true
