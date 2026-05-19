@@ -1,3 +1,1 @@
-
-Jenkinsfile linguist-language=Groovy
-
+*Jenkinsfile* linguist-language=Groovy linguist-detectable=true
