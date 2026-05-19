@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent none //Para los agentes efimeros en cada stage
     options {
         timeout(time: 30, unit: 'MINUTES')
         // Retención afinada: el log es barato (guardamos 10), los artefactos pesan (solo 3)
