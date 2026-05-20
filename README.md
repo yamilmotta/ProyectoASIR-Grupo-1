@@ -3,7 +3,8 @@
 El proyecto consiste en un entorno multisede de pruebas automatizadas de Integración Continuaa (CI/CD) con Jenkins, ubicado en una red local y conectado a dos sedes en la nube de AWS mediante un túnel VPN. El objetivo es poder actualizar la aplicación web desde Github (commits) y encargar a Jenkins la automatización de revisión de sintaxis, seguridad del código y seguridad de la aplicación (via pipeline); una vez el código actualizado pasa las pruebas de Jenkins, éste lo empaqueta y lo sube por SSH a la Sede Blanca (AWS2 - Producción). Este repositorio contiene los archivos de configuración de la BBDD, lógica de contenedores y el código de la aplicación web del Proyecto Intermodular de Final de Grado del Grupo 1 de ASIR.
 
 ## Diagrama de red
-<img width="889" height="505" alt="{14EFA43E-4D1F-4B82-BA5D-0B950FEDAE61}" src="https://github.com/user-attachments/assets/1b9c1567-a3cc-48fe-a98b-5f8d75a7b8d5" />
+<img width="895" height="489" alt="{FE44C04F-FE84-4392-8295-3DD293A85C67}" src="https://github.com/user-attachments/assets/39c0f51d-2c54-41a1-823a-e6992a979f3c" />
+
 
 ## Arquitectura
 
