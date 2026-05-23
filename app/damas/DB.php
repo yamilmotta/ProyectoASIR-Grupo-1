@@ -16,7 +16,7 @@ class DB {
             $host   = getenv('DB_HOST') ?: '10.1.0.30';
             $dbname = getenv('DB_NAME') ?: 'damas';
             $user   = getenv('DB_USER') ?: 'damas_user';
-            $pass   = getenv('DB_PASS'); // Obligatorio, sin fallback hardcodeado
+            $pass = $_SERVER['DB_PASS'] ?? getenv('DB_PASS') ?: 'CAMBIAR_EN_PRODUCCION'; //Al estar Apache en Docker, priorizamos que mire en global primero
 
             $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
               
