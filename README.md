@@ -1,4 +1,4 @@
-# Proyecto Intermodular ASIR - Grupo 1
+# LA FONTAINE - Proyecto Final de CFGS ASIR - Grupo 1
 
 El proyecto consiste en un entorno multisede de pruebas automatizadas de Integración Continuaa (CI/CD) con Jenkins, ubicado en una red local y conectado a dos sedes en la nube de AWS mediante un túnel VPN. El objetivo es poder actualizar la aplicación web desde Github (commits) y encargar a Jenkins la automatización de revisión de sintaxis, seguridad del código y seguridad de la aplicación (via pipeline); una vez el código actualizado pasa las pruebas de Jenkins, éste lo empaqueta y lo sube por SSH a la Sede Blanca (AWS2 - Producción). Este repositorio contiene los archivos de configuración de la BBDD, lógica de contenedores y el código de la aplicación web del Proyecto Intermodular de Final de Grado del Grupo 1 de ASIR.
 
