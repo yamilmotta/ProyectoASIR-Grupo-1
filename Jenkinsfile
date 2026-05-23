@@ -19,6 +19,10 @@ pipeline {
     stages {
         stage('SAST: Lint sintáctico PHP') {
             agent { docker { image 'php:8.2-cli'; args '-u root' } }
+            when {
+                // Si el commit NO toca app/damas, Jenkins ignora este stage por completo
+                changeset "app/damas/**"
+            }
             steps {
                 sh 'php -l app/damas/api.php'
                 sh 'php -l app/damas/GameLogic.php'
