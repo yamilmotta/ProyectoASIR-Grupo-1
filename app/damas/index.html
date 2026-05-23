@@ -10,29 +10,30 @@
         margin: 0; 
         padding: 0; 
     }
-    :root {
-      --c-claro: #ffffff;
-      --c-oscuro: #111111;
+   :root {
+      --c-claro: #e6e6e6;
+      --c-oscuro: #141414;
       --c-sel: #ffffff;
-      --c-mov: #cc0000;
+      --c-mov: #ff3333;
       --c-cap: #ff0000;
-      --c-roja: #cc0000;
-      --c-negra: #000000;
+      --c-roja: #d90429;
+      --c-negra: #0a0a0a;
       --c-dama: #ffffff;
-      --c-accent: #cc0000;
-      --sombra: 0 4px 20px rgba(204, 0, 0, 0.3);
-      --trans: .25s cubic-bezier(.4,0,.2,1);
+      --c-accent: #ef233c;
+      --sombra: 0 10px 30px rgba(0, 0, 0, 0.8);
+      --trans: .3s cubic-bezier(.4,0,.2,1);
     }
    body {
         font-family: system-ui, sans-serif;
-        background: #000000;
+        /* Fondo con degradado tipo viñeta */
+        background: radial-gradient(circle at top, #1a0808 0%, #000000 100%);
         color: #ffffff;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 1.5rem 1rem;
-        gap: 1.5rem;
+        padding: 2.5rem 1rem;
+        gap: 2rem;
     }
     
     h1 {
@@ -41,15 +42,20 @@
         color: #ffffff;
     }
     
-    #lobby {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(204, 0, 0, 0.5);
+   #lobby {
+        background: rgba(20, 20, 20, 0.65);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 3px solid var(--c-accent);
         border-radius: 16px;
-        padding: 2rem;
-        width: min(480px, 100%);
+        padding: 2.5rem;
+        width: min(420px, 100%);
         display: flex;
         flex-direction: column;
-        gap: 1.2rem;
+        gap: 1.5rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 35, 60, 0.15);
+        transform: translateY(10px);
     }
     
     #lobby h2 {
@@ -72,40 +78,49 @@
         gap: .4rem;
     }
     
-    .campo-grupo input {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+   .campo-grupo input {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 8px;
         color: #ffffff;
-        padding: .6rem .9rem;
-        font-size: .95rem;
+        padding: .85rem 1rem;
+        font-size: 1rem;
         outline: none;
-        transition: border-color var(--trans);
+        transition: all var(--trans);
         width: 100%;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
     }
     
-    .campo-grupo input:focus {
+   .campo-grupo input:focus {
         border-color: var(--c-accent);
+        background: rgba(0, 0, 0, 0.7);
+        box-shadow: 0 0 12px rgba(239, 35, 60, 0.4), inset 0 2px 5px rgba(0, 0, 0, 0.5);
     }
     .campo-grupo input::placeholder {
         color: #888888;
     }
     
     .btn-primario {
-        background: var(--c-accent);
+        background: linear-gradient(135deg, var(--c-roja), var(--c-accent));
         color: #ffffff;
-        border: 1px solid #ff0000;
-        padding: .65rem 1.4rem;
+        border: none;
+        padding: .8rem 1.5rem;
         border-radius: 8px;
         cursor: pointer;
-        font-size: .95rem;
+        font-size: 1rem;
         font-weight: 600;
-        transition: background var(--trans), transform .1s;
-        align-self: flex-start;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all var(--trans);
+        box-shadow: 0 4px 15px rgba(239, 35, 60, 0.3);
+        width: 100%;
+        margin-top: 0.5rem;
     }
     
     .btn-primario:hover {
-        background: #ff0000;
+        background: linear-gradient(135deg, var(--c-accent), #ff3333);
+        box-shadow: 0 6px 20px rgba(239, 35, 60, 0.5);
+        transform: translateY(-2px);
     }
     
     .btn-primario:active {
@@ -270,8 +285,8 @@
         height: min(72vw, 560px);
         border-radius: 6px;
         overflow: hidden;
-        box-shadow: var(--sombra);
-        border: 3px solid #cc0000;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 35, 60, 0.1);
+        border: 2px solid #2a2a2a;
     }
     
     .casilla {
@@ -307,13 +322,14 @@
     
     .casilla.movimiento::after {
         background: var(--c-mov);
-        opacity: .85;
+        opacity: .8;
+        box-shadow: 0 0 10px var(--c-mov); /* Luz neón */
     }
     
     .casilla.captura::after {
         background: var(--c-cap);
-        opacity: .95;
-        box-shadow: 0 0 8px #ff0000;
+        opacity: 1;
+        box-shadow: 0 0 15px var(--c-cap); /* Luz neón más fuerte */
     }
     
     #tablero.bloqueado {
@@ -339,13 +355,13 @@
         transform: scale(1.08);
     }
     .pieza.R, .pieza.RD {
-        background: radial-gradient(circle at 35% 35%, #ff4d4d, var(--c-roja));
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.5), 0 0 0 2px #ffffff;
+        background: radial-gradient(circle at 35% 35%, #ff4d6d, var(--c-roja));
+        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.8), inset 0 2px 5px rgba(255, 255, 255, 0.4);
     }
     
     .pieza.N, .pieza.ND {
-        background: radial-gradient(circle at 35% 35%, #333333, var(--c-negra));
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.3), 0 0 0 2px #ffffff;
+        background: radial-gradient(circle at 35% 35%, #4a4a4a, var(--c-negra));
+        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.9), inset 0 2px 5px rgba(255, 255, 255, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05);
     }
     
     .pieza.RD::after, .pieza.ND::after {
