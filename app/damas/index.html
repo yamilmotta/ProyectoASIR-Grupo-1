@@ -5,70 +5,434 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Damas — Rojas vs Negras</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --c-claro:#f0d9b5;--c-oscuro:#b58863;--c-sel:#7fc97f;
-      --c-mov:#5b9bd5;--c-cap:#e25c5c;--c-roja:#cc3333;
-      --c-negra:#1a1a1a;--c-dama:#ffd700;--c-accent:#b58863;
-      --sombra:0 4px 20px rgba(0,0,0,.35);--trans:.25s cubic-bezier(.4,0,.2,1);
+    *, *::before, *::after { 
+        box-sizing: border-box; 
+        margin: 0; 
+        padding: 0; 
     }
-    body{font-family:system-ui,sans-serif;background:#2c2c2c;color:#f0f0f0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem;gap:1.5rem;}
-    h1{font-size:1.6rem;letter-spacing:.5px;color:#f0d9b5;}
-    #lobby{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:2rem;width:min(480px,100%);display:flex;flex-direction:column;gap:1.2rem;}
-    #lobby h2{font-size:1.1rem;color:var(--c-claro);font-weight:600;}
-    .campo-grupo{display:flex;flex-direction:column;gap:.4rem;}
-    .campo-grupo label{font-size:.8rem;color:#aaa;display:flex;align-items:center;gap:.4rem;}
-    .campo-grupo input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#f0f0f0;padding:.6rem .9rem;font-size:.95rem;outline:none;transition:border-color var(--trans);width:100%;}
-    .campo-grupo input:focus{border-color:var(--c-accent);}
-    .campo-grupo input::placeholder{color:#666;}
-    .btn-primario{background:var(--c-accent);color:#fff;border:none;padding:.65rem 1.4rem;border-radius:8px;cursor:pointer;font-size:.95rem;font-weight:600;transition:background var(--trans),transform .1s;align-self:flex-start;}
-    .btn-primario:hover{background:#9a7248;}.btn-primario:active{transform:scale(.97);}.btn-primario:disabled{opacity:.5;cursor:not-allowed;}
-    #panel-enlaces{display:none;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:1.5rem;width:min(560px,100%);gap:1rem;flex-direction:column;}
-    #panel-enlaces h2{font-size:1rem;color:var(--c-claro);}
-    .enlace-jugador{background:rgba(255,255,255,.05);border-radius:10px;padding:1rem;display:flex;flex-direction:column;gap:.5rem;}
-    .enlace-jugador .etiqueta{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-    .enlace-jugador .etiqueta.R{color:var(--c-roja);}.enlace-jugador .etiqueta.N{color:#aaa;}
-    .enlace-url{background:rgba(0,0,0,.3);border-radius:6px;padding:.5rem .75rem;font-size:.75rem;color:#ccc;word-break:break-all;font-family:monospace;}
-    .btn-copiar{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#f0f0f0;border-radius:6px;padding:.35rem .8rem;cursor:pointer;font-size:.8rem;align-self:flex-start;transition:background var(--trans);}
-    .btn-copiar:hover{background:rgba(255,255,255,.18);}
-    .btn-row{display:flex;gap:.75rem;flex-wrap:wrap;}
-    #panel{display:none;gap:1rem;align-items:center;background:rgba(255,255,255,.07);padding:.75rem 1.5rem;border-radius:12px;border:1px solid rgba(255,255,255,.12);flex-wrap:wrap;justify-content:center;}
-    .turno-badge{display:flex;align-items:center;gap:.5rem;font-size:.9rem;font-weight:500;}
-    .turno-circulo{width:22px;height:22px;border-radius:50%;border:2px solid #f0d9b5;transition:background var(--trans);}
-    .turno-circulo.R{background:var(--c-roja);}.turno-circulo.N{background:var(--c-negra);}
-    .badge-miturno{background:#2d5a2d;border:1px solid #4a9a4a;color:#7dda7d;padding:.2rem .6rem;border-radius:20px;font-size:.75rem;font-weight:600;}
-    .badge-esperar{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#888;padding:.2rem .6rem;border-radius:20px;font-size:.75rem;}
-    .badge-yo{background:rgba(181,136,99,.2);border:1px solid var(--c-accent);color:var(--c-claro);padding:.2rem .7rem;border-radius:20px;font-size:.78rem;font-weight:600;}
-    #msg-estado{font-size:.85rem;color:#aaa;}
-    #tablero-wrap{position:relative;}
-    #tablero{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);width:min(72vw,560px);height:min(72vw,560px);border-radius:6px;overflow:hidden;box-shadow:var(--sombra);border:3px solid #7a5c3b;}
-    .casilla{display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:filter var(--trans);}
-    .casilla.claro{background:var(--c-claro);}.casilla.oscuro{background:var(--c-oscuro);}
-    .casilla.seleccionada{filter:brightness(1.3);outline:3px solid var(--c-sel) inset;}
-    .casilla.movimiento::after,.casilla.captura::after{content:'';position:absolute;width:30%;height:30%;border-radius:50%;pointer-events:none;}
-    .casilla.movimiento::after{background:var(--c-mov);opacity:.75;}.casilla.captura::after{background:var(--c-cap);opacity:.85;}
-    #tablero.bloqueado{opacity:.8;cursor:not-allowed;}
-    #tablero.bloqueado .casilla{cursor:not-allowed;pointer-events:none;}
-    .pieza{width:78%;height:78%;border-radius:50%;position:relative;transition:transform var(--trans),box-shadow var(--trans);cursor:pointer;}
-    .pieza:hover{transform:scale(1.08);}
-    .pieza.R,.pieza.RD{background:radial-gradient(circle at 35% 35%,#e05555,var(--c-roja));box-shadow:0 3px 8px rgba(0,0,0,.5),inset 0 1px 2px rgba(255,255,255,.25);}
-    .pieza.N,.pieza.ND{background:radial-gradient(circle at 35% 35%,#444,var(--c-negra));box-shadow:0 3px 8px rgba(0,0,0,.5),inset 0 1px 2px rgba(255,255,255,.15);}
-    .pieza.RD::after,.pieza.ND::after{content:'♛';position:absolute;top:50%;left:50%;transform:translate(-50%,-48%);font-size:1.4em;color:var(--c-dama);text-shadow:0 1px 2px rgba(0,0,0,.8);}
-    @keyframes pieza-entra{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
-    .pieza.nueva{animation:pieza-entra .3s cubic-bezier(.175,.885,.32,1.275);}
-    #ganador-banner{display:none;position:absolute;inset:0;background:rgba(0,0,0,.78);border-radius:4px;align-items:center;justify-content:center;flex-direction:column;gap:1rem;z-index:10;}
-    #ganador-banner.visible{display:flex;}
-    #ganador-banner h2{font-size:2rem;color:var(--c-dama);}
-    #ganador-banner .btn-primario{align-self:center;}
-    #leyenda{display:flex;gap:1.5rem;font-size:.78rem;color:#888;flex-wrap:wrap;justify-content:center;}
-    .leyenda-item{display:flex;align-items:center;gap:.4rem;}
-    .dot{width:12px;height:12px;border-radius:50%;}
-    .dot.verde{background:var(--c-sel);}.dot.azul{background:var(--c-mov);}.dot.rojo{background:var(--c-cap);}
+    :root {
+      --c-claro: #ffffff;
+      --c-oscuro: #111111;
+      --c-sel: #ffffff;
+      --c-mov: #cc0000;
+      --c-cap: #ff0000;
+      --c-roja: #cc0000;
+      --c-negra: #000000;
+      --c-dama: #ffffff;
+      --c-accent: #cc0000;
+      --sombra: 0 4px 20px rgba(204, 0, 0, 0.3);
+      --trans: .25s cubic-bezier(.4,0,.2,1);
+    }
+   body {
+        font-family: system-ui, sans-serif;
+        background: #000000;
+        color: #ffffff;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem 1rem;
+        gap: 1.5rem;
+    }
+    
+    h1 {
+        font-size: 1.6rem;
+        letter-spacing: .5px;
+        color: #ffffff;
+    }
+    
+    #lobby {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(204, 0, 0, 0.5);
+        border-radius: 16px;
+        padding: 2rem;
+        width: min(480px, 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    
+    #lobby h2 {
+        font-size: 1.1rem;
+        color: var(--c-claro);
+        font-weight: 600;
+    }
+    
+    .campo-grupo {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+    }
+    
+    .campo-grupo label {
+        font-size: .8rem;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+    
+    .campo-grupo input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: #ffffff;
+        padding: .6rem .9rem;
+        font-size: .95rem;
+        outline: none;
+        transition: border-color var(--trans);
+        width: 100%;
+    }
+    
+    .campo-grupo input:focus {
+        border-color: var(--c-accent);
+    }
+    .campo-grupo input::placeholder {
+        color: #888888;
+    }
+    
+    .btn-primario {
+        background: var(--c-accent);
+        color: #ffffff;
+        border: 1px solid #ff0000;
+        padding: .65rem 1.4rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: .95rem;
+        font-weight: 600;
+        transition: background var(--trans), transform .1s;
+        align-self: flex-start;
+    }
+    
+    .btn-primario:hover {
+        background: #ff0000;
+    }
+    
+    .btn-primario:active {
+        transform: scale(.97);
+    }
+    
+    .btn-primario:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+    
+    #panel-enlaces {
+        display: none;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(204, 0, 0, 0.5);
+        border-radius: 16px;
+        padding: 1.5rem;
+        width: min(560px, 100%);
+        gap: 1rem;
+        flex-direction: column;
+    }
+    
+    #panel-enlaces h2 {
+        font-size: 1rem;
+        color: var(--c-claro);
+    }
+    
+    .enlace-jugador {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+    .enlace-jugador .etiqueta {
+        font-size: .78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+    
+    .enlace-jugador .etiqueta.R {
+        color: var(--c-roja);
+    }
+    
+    .enlace-jugador .etiqueta.N {
+        color: #ffffff;
+    }
+    
+    .enlace-url {
+        background: rgba(0, 0, 0, 0.8);
+        border: 1px solid #333333;
+        border-radius: 6px;
+        padding: .5rem .75rem;
+        font-size: .75rem;
+        color: #ffffff;
+        word-break: break-all;
+        font-family: monospace;
+    }
+    
+    .btn-copiar {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border-radius: 6px;
+        padding: .35rem .8rem;
+        cursor: pointer;
+        font-size: .8rem;
+        align-self: flex-start;
+        transition: background var(--trans);
+    }
+    
+    .btn-copiar:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-row {
+        display: flex;
+        gap: .75rem;
+        flex-wrap: wrap;
+    }
+    
+    #panel {
+        display: none;
+        gap: 1rem;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        padding: .75rem 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(204, 0, 0, 0.5);
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .turno-badge {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .9rem;
+        font-weight: 500;
+    }
+    
+    .turno-circulo {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid #ffffff;
+        transition: background var(--trans);
+    }
+    
+    .turno-circulo.R {
+        background: var(--c-roja);
+    }
+    
+    .turno-circulo.N {
+        background: var(--c-negra);
+    }
+    
+    .badge-miturno {
+        background: #cc0000;
+        border: 1px solid #ff0000;
+        color: #ffffff;
+        padding: .2rem .6rem;
+        border-radius: 20px;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+    
+    .badge-esperar {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        padding: .2rem .6rem;
+        border-radius: 20px;
+        font-size: .75rem;
+    }
+    .badge-yo {
+        background: rgba(204, 0, 0, 0.2);
+        border: 1px solid var(--c-accent);
+        color: var(--c-claro);
+        padding: .2rem .7rem;
+        border-radius: 20px;
+        font-size: .78rem;
+        font-weight: 600;
+    }
+    
+    #msg-estado {
+        font-size: .85rem;
+        color: #ffffff;
+    }
+    
+    #tablero-wrap {
+        position: relative;
+    }
+    
+    #tablero {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows: repeat(8, 1fr);
+        width: min(72vw, 560px);
+        height: min(72vw, 560px);
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: var(--sombra);
+        border: 3px solid #cc0000;
+    }
+    
+    .casilla {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        transition: filter var(--trans);
+    }
+    
+    .casilla.claro {
+        background: var(--c-claro);
+    }
+    
+    .casilla.oscuro {
+        background: var(--c-oscuro);
+    }
+    
+    .casilla.seleccionada {
+        filter: brightness(1.3);
+        outline: 3px solid var(--c-sel) inset;
+    }
+    
+    .casilla.movimiento::after, .casilla.captura::after {
+        content: '';
+        position: absolute;
+        width: 30%;
+        height: 30%;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    
+    .casilla.movimiento::after {
+        background: var(--c-mov);
+        opacity: .85;
+    }
+    
+    .casilla.captura::after {
+        background: var(--c-cap);
+        opacity: .95;
+        box-shadow: 0 0 8px #ff0000;
+    }
+    
+    #tablero.bloqueado {
+        opacity: .8;
+        cursor: not-allowed;
+    }
+    
+    #tablero.bloqueado .casilla {
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .pieza {
+        width: 78%;
+        height: 78%;
+        border-radius: 50%;
+        position: relative;
+        transition: transform var(--trans), box-shadow var(--trans);
+        cursor: pointer;
+    }
+    
+    .pieza:hover {
+        transform: scale(1.08);
+    }
+    .pieza.R, .pieza.RD {
+        background: radial-gradient(circle at 35% 35%, #ff4d4d, var(--c-roja));
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.5), 0 0 0 2px #ffffff;
+    }
+    
+    .pieza.N, .pieza.ND {
+        background: radial-gradient(circle at 35% 35%, #333333, var(--c-negra));
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.3), 0 0 0 2px #ffffff;
+    }
+    
+    .pieza.RD::after, .pieza.ND::after {
+        content: '♛';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -48%);
+        font-size: 1.4em;
+        color: var(--c-dama);
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+    }
+    
+    @keyframes pieza-entra {
+        from { transform: scale(0); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    .pieza.nueva {
+        animation: pieza-entra .3s cubic-bezier(.175, .885, .32, 1.275);
+    }
+    
+    #ganador-banner {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        border-radius: 4px;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 1rem;
+        z-index: 10;
+        border: 2px solid #cc0000;
+    }
+    
+    #ganador-banner.visible {
+        display: flex;
+    }
+    
+    #ganador-banner h2 {
+        font-size: 2rem;
+        color: #ffffff;
+        text-shadow: 0 0 10px #ff0000;
+    }
+    
+    #ganador-banner .btn-primario {
+        align-self: center;
+    }
+    
+    #leyenda {
+        display: flex;
+        gap: 1.5rem;
+        font-size: .85rem;
+        color: #ffffff;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .leyenda-item {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+    
+    .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 1px solid #ffffff;
+    }
+    .dot.verde {
+        background: var(--c-sel);
+    }
+    
+    .dot.azul {
+        background: var(--c-mov);
+    }
+    
+    .dot.rojo {
+        background: var(--c-cap);
+    }
   </style>
 </head>
 <body>
 
-<h1>♟ Damas <span style="color:#aaa;font-weight:300">Rojas vs Negras</span></h1>
+<h1>♟ Damas <span style="color:#ffffff;font-weight:300">Rojas vs Negras</span></h1>
 
 <div id="lobby">
   <h2>Nueva partida</h2>
@@ -77,7 +441,7 @@
     <input id="inp-rojo" type="text" maxlength="30" placeholder="Jugador Rojo" autocomplete="off">
   </div>
   <div class="campo-grupo">
-    <label><span style="color:#888">●</span> Nombre Jugador Negro</label>
+    <label><span style="color:#ffffff">●</span> Nombre Jugador Negro</label>
     <input id="inp-negro" type="text" maxlength="30" placeholder="Jugador Negro" autocomplete="off">
   </div>
   <button class="btn-primario" id="btn-crear">Crear partida →</button>
@@ -97,7 +461,7 @@
   </div>
   <div class="btn-row">
     <button class="btn-primario" id="btn-ir-rojo">Jugar como Rojo →</button>
-    <button class="btn-primario" id="btn-ir-negro" style="background:#555">Jugar como Negro →</button>
+    <button class="btn-primario" id="btn-ir-negro" style="background:#000000; border: 1px solid #ffffff;">Jugar como Negro →</button>
   </div>
 </div>
 
@@ -297,7 +661,7 @@ function actualizarPanel() {
 
 function mostrarMensaje(txt,esError=false) {
   const el=document.getElementById('msg-estado');
-  el.textContent=txt; el.style.color=esError?'#e05555':'#aaa';
+  el.textContent=txt; el.style.color=esError?'#ff0000':'#ffffff';
 }
 
 function mostrarGanador(quien) {
